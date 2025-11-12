@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
 async function getAccessToken() {
     const auth = base64.encode(`${consumerKey}:${consumerSecret}`);
     const res = await fetch(
-        'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
+        'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
         {
             headers: { Authorization: `Basic ${auth}` },
         }
@@ -63,7 +63,7 @@ app.post('/stkpush', async (req, res) => {
         };
 
         const stkResponse = await fetch(
-            'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+            'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
             {
                 method: 'POST',
                 headers: {
