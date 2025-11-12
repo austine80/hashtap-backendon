@@ -34,6 +34,11 @@ async function getAccessToken() {
             headers: { Authorization: `Basic ${auth}` },
         }
     );
+
+    if (!res.ok) {
+        console.error('Failed to get access token', res.status, await res.text());
+        throw new Error('Access token request failed');
+    }
     const data = await res.json();
     return data.access_token;
 }
