@@ -1,62 +1,37 @@
-import express from 'express';
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
-import bodyParser from 'body-parser';
-import cors from 'cors';
+import express from "express";
+import cors from "cors";
+import { stkPush } from "./stkPush.js";
 
-dotenv.config();
 const app = express();
-
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// Paystack secret key from your .env
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
-
-// Endpoint to initialize payment
-app.post('/paystack/init', async (req, res) => {
+// 1️⃣ Initiate STK Push (Frontend calls this)
+app.post("/pay", async (req, res) => {
     try {
-        const { email, amount } = req.body;
+        const { phone, amount } = req.body;
 
-        const payload = {
-            email,
-            amount: amount * 100, // Paystack expects amount in kobo
-        };
+        const formattedPhone = phone.startsWith("254")
+            ? phone
+            : phone.replace(/^0/, "254");
 
-        const response = await fetch('https://api.paystack.co/transaction/initialize', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        });
-
-        const data = await response.json();
-        res.json(data);
+        const result = await stkPush(formattedPhone, amount);
+        res.json(result);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Paystack initialization failed', error });
+        res.status(500).json({
+            message: "Payment request failed",
+            error: error.response?.data || error.message,
+        });
     }
 });
 
-// Endpoint to verify payment
-app.get('/paystack/verify/:reference', async (req, res) => {
-    try {
-        const { reference } = req.params;
+// 2️⃣ Safaricom sends callback here
+app.post("/callback", (req, res) => {
+    console.log("💚 Payment Callback Received:", req.body);
+    res.sendStatus(200); // Must reply 200 to Safaricom
 
-        const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}` },
-        });
-
-        const data = await response.json();
-        res.json(data);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Verification failed', error });
-    }
+    // 👉 You can save success results to DB here
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Backend running on ${PORT}`));
