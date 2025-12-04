@@ -23,27 +23,25 @@ export const getAccessToken = async () => {
 export const stkPush = async (phone, amount) => {
     const token = await getAccessToken();
 
-    const timestamp = new Date()
-        .toISOString()
-        .replace(/[^0-9]/g, "")
-        .slice(0, 14);
+    const moment = require("moment-timezone");
+    const timestamp = moment().tz("Africa/Nairobi").format("YYYYMMDDHHmmss");
 
     const password = Buffer.from(
         process.env.DARAJA_SHORTCODE + process.env.DARAJA_PASSKEY + timestamp
     ).toString("base64");
 
     const requestData = {
-        BusinessShortCode: process.env.DARAJA_SHORTCODE,
+        BusinessShortCode: process.env.DARAJA_SHORTCODE, // Still the shortcode for Lipa na Mpesa Online
         Password: password,
         Timestamp: timestamp,
-        TransactionType: "CustomerPayBillOnline",
+        TransactionType: "CustomerBuyGoodsOnline",  // UPDATED
         Amount: amount,
         PartyA: phone,
-        PartyB: process.env.DARAJA_SHORTCODE,
+        PartyB: process.env.DARAJA_TILL_NUMBER,  // UPDATED
         PhoneNumber: phone,
         CallBackURL: process.env.CALLBACK_URL,
-        AccountReference: "Payment",
-        TransactionDesc: "Test Payment"
+        AccountReference: "BuyGoods Payment",  // UPDATED
+        TransactionDesc: "Till Payment"
     };
 
     const response = await axios.post(stkUrl, requestData, {
